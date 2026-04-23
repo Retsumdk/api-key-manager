@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * api-key-manager - Rotating API key management with usage tracking
- * Built with Zo Computer by The BookMaster
+ * Built by Retsumdk
  */
 
 import { Command } from "commander";
