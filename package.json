@@ -1,17 +1,56 @@
 {
   "name": "api-key-manager",
-  "description": "Rotating API key management with usage tracking",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "description": "Rotating API key management with usage tracking — fingerprint-at-rest security, quotas, revoke and rotate.",
   "type": "module",
-  "scripts": {
-    "test": "bun test",
-    "build": "tsc"
+  "bin": {
+    "api-key-manager": "dist/cli.js"
   },
-  "dependencies": {
-    "commander": "^11.1.0"
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "build:lib": "bun build src/index.ts --target=bun --outfile=dist/index.js",
+    "build:cli": "bun build src/cli.ts --target=bun --outfile=dist/cli.js",
+    "build": "bun run build:lib && bun run build:cli"
+  },
+  "engines": {
+    "node": ">=18",
+    "bun": ">=1.0"
+  },
+  "keywords": [
+    "api-key",
+    "api-keys",
+    "key-management",
+    "key-rotation",
+    "rotation",
+    "quotas",
+    "usage-tracking",
+    "security",
+    "authentication",
+    "secrets"
+  ],
+  "license": "MIT",
+  "author": "Retsumdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Retsumdk/api-key-manager.git"
   },
   "devDependencies": {
-    "bun-types": "^1.0.0",
-    "typescript": "^5.3.0"
+    "@types/bun": "^1.1.0",
+    "typescript": "^5.6.0"
   }
 }

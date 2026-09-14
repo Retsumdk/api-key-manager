@@ -1,5 +1,10 @@
 node_modules/
 dist/
+*.tsbuildinfo
+*.jsonl
+*.jsonl.tmp
 .env
+.env.*
 *.log
 coverage/
+.DS_Store

@@ -1,51 +1,74 @@
-#!/usr/bin/env bun
 /**
- * api-key-manager - Rotating API key management with usage tracking
- * Built by Retsumdk
+ * index.ts — public entry point for api-key-manager.
+ *
+ *   import { ApiKeyManager, FileStore, createManager } from "api-key-manager";
+ *
+ *   const manager = createManager({ file: "keys.jsonl" });
+ *   const { raw } = await manager.createKey({ provider: "openai", quota: 1000 });
  */
 
-import { Command } from "commander";
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { ApiKeyManager, parseBearer } from "./manager.ts";
+import type { ManagerOptions } from "./manager.ts";
+import { FileStore, MemoryStore, makeRecord } from "./storage.ts";
+import { deriveFingerprint } from "./storage.ts";
+import { fingerprint, generateKey, newKeyId, shortPrefix, GLOBAL_PROVIDER } from "./crypto.ts";
+import { ConsoleSink, HttpSink, MemorySink } from "./provider/base.ts";
+import { run as cli } from "./cli.ts";
+import type {
+  ApiKeyRecord,
+  CreateKeyOptions,
+  KeyStore,
+  RotateOptions,
+  Rotation,
+  UsageSink,
+  Validation,
+  ValidOptions,
+} from "./types.ts";
 
-interface Config {
-  apiKey?: string;
-  baseUrl: string;
-  timeout: number;
-  retries: number;
-}
-
-const DEFAULTS: Config = {
-  baseUrl: "https://api.example.com",
-  timeout: 30000,
-  retries: 3,
+export {
+  ApiKeyManager,
+  parseBearer,
+  FileStore,
+  MemoryStore,
+  makeRecord,
+  deriveFingerprint,
+  fingerprint,
+  generateKey,
+  newKeyId,
+  shortPrefix,
+  GLOBAL_PROVIDER,
+  ConsoleSink,
+  HttpSink,
+  MemorySink,
+  cli,
 };
 
-function loadConfig(): Config {
-  const cfgPath = join(process.cwd(), "config.json");
-  if (existsSync(cfgPath)) {
-    try {
-      return { ...DEFAULTS, ...JSON.parse(readFileSync(cfgPath, "utf-8")) };
-    } catch { /* ignore */ }
-  }
-  return { ...DEFAULTS };
+export type {
+  ApiKeyRecord,
+  CreateKeyOptions,
+  KeyStore,
+  ManagerOptions,
+  RotateOptions,
+  Rotation,
+  UsageSink as UsageProvider,
+  Validation,
+  ValidOptions,
+};
+
+/**
+ * Convenience factory: a manager backed by a persisted JSONL file, with an
+ * optional pepper secret (read from `secret` or `API_KEY_MANAGER_SECRET`).
+ */
+export function createManager(
+  options: ManagerOptions & { file?: string } = {},
+): ApiKeyManager {
+  const { file, ...rest } = options;
+  const store =
+    rest.store ?? (file ? new FileStore({ file }) : new MemoryStore());
+  const secret =
+    rest.secret ??
+    (typeof process !== "undefined" ? process.env.API_KEY_MANAGER_SECRET : undefined);
+  return new ApiKeyManager({ ...rest, store, secret });
 }
 
-async function main(cfg: Config) {
-  console.log(`[${name}] Connected to ${cfg.baseUrl}`);
-  console.log(`[${name}] Timeout: ${cfg.timeout}ms | Retries: ${cfg.retries}`);
-  // TODO: implement your logic here
-  console.log(`[${name}] Done.`);
-}
-
-const program = new Command();
-program.name("api-key-manager").description("Rotating API key management with usage tracking").version("1.0.0")
-  .option("-c, --config <path>", "Config file path", "config.json")
-  .option("-v, --verbose", "Verbose mode")
-  .action(async (opts) => {
-    const cfg = loadConfig();
-    if (opts.verbose) console.log("Verbose mode on");
-    try { await main(cfg); }
-    catch (e) { console.error(`Error: ${e}`); process.exit(1); }
-  });
-program.parse(process.argv);
+export { ApiKeyManager as default };
